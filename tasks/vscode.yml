@@ -1,0 +1,21 @@
+---
+- name: List installed VScode extensions
+  command: code --list-extensions
+  changed_when: false
+  register: __vscode_installed_extensions
+
+- name: Install VScode extensions
+  command: "code --install-extension {{ item }}"
+  loop: "{{ vscode_extensions }}"
+  when: item not in (__vscode_installed_extensions.stdout_lines  | map('lower') | list)
+
+- block:
+    - name: Symlink VScode settings.json to dotfiles
+      file:
+        state: link
+        force: true
+        src: "{{ dotfiles_repo_local_destination }}/{{ item }}"
+        dest: "{{ vscode_base_path }}/User/{{ item | basename }}"
+        mode: 0644
+      loop: "{{ vscode_user_settings_from_dotfiles }}"
+  when: configure_dotfiles

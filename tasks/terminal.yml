@@ -1,28 +1,16 @@
----
-# Custom Terminal theme.
-- name: Get current Terminal profile.
-  command: defaults read com.apple.terminal 'Default Window Settings'
-  register: terminal_theme
-  changed_when: false
-  check_mode: false
+# Configure ZSH
 
-- name: Ensure custom Terminal profile is added.
-  copy:
-    src: files/terminal/JJG-Term.terminal
-    dest: /tmp/JJG-Term.terminal
-  changed_when: false
-  when: "'JJG-Term' not in terminal_theme.stdout"
+- name: Check if oh-my-zsh is already present
+  stat:
+    path: ~/.oh-my-zsh
+  register: __omzsh_installed
 
-- name: Ensure custom Terminal profile is added.
-  command: open /tmp/JJG-Term.terminal
-  changed_when: false
-  when: "'JJG-Term' not in terminal_theme.stdout"
+- name: Install oh-my-zsh
+  shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  when: not __omzsh_installed.stat.exists
 
-# TODO: This doesn't work in Yosemite. Consider a different solution?
-- name: Ensure custom Terminal profile is set as default.
-  command: "{{ item }}"
-  with_items:
-    - defaults write com.apple.terminal 'Default Window Settings' -string JJG-Term
-    - defaults write com.apple.terminal 'Startup Window Settings' -string JJG-Term
-  changed_when: false
-  when: "'JJG-Term' not in terminal_theme.stdout"
+- name: Install power10k theme
+  git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: ~/.oh-my-zsh/custom/themes/powerlevel10k
+    depth: 1
